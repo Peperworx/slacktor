@@ -33,24 +33,27 @@ struct SlabEntry<T> {
     generation: usize,
 }
 
-/// # ActorSlab
+/// # Slab
 /// A slab-like structure that is used to store actors. It can be reallocated/resized, but is initialized to a fixed size.
-pub struct ActorSlab<T> {
+pub struct Slab<T> {
     /// The actual entries in the slab.
     entries: Vec<SlabEntry<T>>,
     /// The next free entry in the slab.
     next_free: usize,
     /// How many entries are currently in use.
     used: usize,
+    /// The initial capacity of the slab.
+    initial_capacity: usize,
 }
 
-impl<T> ActorSlab<T> {
-    /// Creates a new [`ActorSlab`] initialized to the given capacity.
+impl<T> Slab<T> {
+    /// Creates a new [`Slab`] initialized to the given capacity.
     pub fn new(capacity: usize) -> Self {
         Self {
             entries: Vec::with_capacity(capacity),
             next_free: 0,
             used: 0,
+            initial_capacity: capacity,
         }
     }
 
@@ -167,12 +170,24 @@ impl<T> ActorSlab<T> {
         self.next_free = 0;
         // Reset the used count
         self.used = 0;
+        // Update the initial capacity
+        self.initial_capacity = capacity;
+    }
+
+    /// Clears the entire slab.
+    pub fn clear(&mut self) {
+        self.deallocate_to(self.initial_capacity);
     }
 
     /// Returns the number of used entries in the slab.
     /// This does not correlate to the actual memory usage of the slab whatsoever, as freed entries are not deallocated.
     pub fn len(&self) -> usize {
         self.used
+    }
+
+    /// Returns true if len is 0.
+    pub fn is_empty(&self) -> bool {
+        self.used == 0
     }
 
     /// Gets a reference to an entry from the slab.
