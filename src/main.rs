@@ -1,45 +1,32 @@
-use slacktor::actor::{Actor, ActorHandle, Handle, HandleMessage, Message};
-use std::{error::Error, sync::Arc, time::Instant};
+use std::time::Instant;
+
+use slacktor::{actor::{Handler, Message}, Slacktor};
 
 struct TestMessage(pub u64);
+
 impl Message for TestMessage {
-    type Response = u64;
+    type Result = u64;
 }
 
-struct TestMessage2;
-impl Message for TestMessage2 {
-    type Response = ();
-}
 
 struct TestActor(pub u64);
 
-impl Actor for TestActor {}
 
-impl HandleMessage<TestMessage> for TestActor {
-    fn handle_message(&self, m: TestMessage) -> Result<u64, Box<dyn Error>> {
-        Ok(m.0^self.0)
+impl Handler<TestMessage> for TestActor {
+    fn handle_message(&self, m: TestMessage) -> u64 {
+        m.0^self.0
     }
 }
 
-impl HandleMessage<TestMessage2> for TestActor {
-    fn handle_message(&self, _: TestMessage2) -> Result<(), Box<dyn Error>> {
-        println!("Handled2");
-        Ok(())
-    }
-}
 
 fn main() {
-    let mut actor_slab = slab::Slab::<Box<dyn ActorHandle>>::new();
+    // Create a slacktor instance
+    let mut system = Slacktor::new();
 
-    // Add an actor
-    let actor_id = actor_slab.insert(Box::new(Handle(Arc::new(TestActor(rand::random::<u64>())))));
+    // Create a new actor
+    let actor_id = system.spawn(TestActor(rand::random::<u64>()));
 
-    // Get the actor
-    let actor = actor_slab
-        .get(actor_id)
-        .and_then(|v| v.as_any().downcast_ref::<Handle<TestActor>>())
-        .cloned()
-        .unwrap().0;
+    let a = system.get::<TestActor>(actor_id).unwrap();
 
     // Time 1 billion messages, appending each to a vector and doing some math to prevent the
     // code being completely optimzied away. (Which is impressive that the compiler can do.)
@@ -48,9 +35,19 @@ fn main() {
     let mut out = Vec::with_capacity(num_messages);
     let start = Instant::now();
     for i in 0..num_messages {
-        let a = actor.handle_message(TestMessage(i as u64)).unwrap();
-        out.push(a);
+        let v = a.send(TestMessage(i as u64));
+        out.push(v);
     }
     let elapsed = start.elapsed();
     println!("{:.2} messages/sec", num_messages as f64/elapsed.as_secs_f64());
+
+    // With no storing it to the vector, rustc can optimize everything away
+    // This doesn't happen with other actor frameworks.
+    let num_messages: u64 = 1_000_000_000;
+    let start = Instant::now();
+    for i in 0..num_messages {
+        let _v = a.send(TestMessage(i as u64));
+    }
+    let elapsed = start.elapsed();
+    println!("{:?}", elapsed);
 }
