@@ -1,5 +1,8 @@
-use std::sync::Arc;
+#![no_std]
 
+extern crate alloc;
+
+use alloc::sync::Arc;
 use actor::{Actor, ActorHandle, ActorRef};
 
 

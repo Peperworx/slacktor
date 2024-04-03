@@ -1,6 +1,6 @@
 # Slacktor
 
-Extremely fast bare-bones actor system library written in Rust.
+Extremely fast bare-bones actor library written in Rust.
 
 ## Limitations
 
@@ -8,7 +8,9 @@ Slacktor actors do not have what would be called "contexts" in other actor frame
 
 ## How is Slacktor So Fast?
 
-Slacktor doesn't try to handle any synchronization, concurrency, or message passing. Instead, Slacktor provides a simple abstraction over a slab of actors. Message passing is then emulated by calling the message handler as soon as `send` is called. This allows the compiler to essentially optimize away the entire actor system down to just a few function calls.
+Slacktor doesn't try to handle any synchronization, concurrency, or message passing. Instead, Slacktor provides a simple abstraction over a slab of actors. Message passing is then emulated by calling the message handler as soon as `send` is called. This allows the compiler to essentially optimize away the entirery of Slacktor down to just a few function calls.
+
+## Benchmarks
 
 On my laptop (i9-13900H, 32GB RAM), the following code outputs roughly 700,000,000 messages/second:
 ```rust
