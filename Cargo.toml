@@ -5,8 +5,6 @@ edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
-
-
 [dependencies]
 slab = "0.4.9"
 
@@ -16,5 +14,9 @@ rand = "0.8.5"
 [features]
 async = []
 
+
+
 [profile.release]
+opt-level = 3
 lto = true
+strip = true

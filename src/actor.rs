@@ -1,5 +1,5 @@
-use std::{any::Any, sync::Arc};
-
+use core::any::Any;
+use alloc::sync::Arc;
 
 /// # [`Actor`]`
 /// Trait implemented by actors
