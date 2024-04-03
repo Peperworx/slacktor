@@ -8,3 +8,4 @@ edition = "2021"
 
 
 [dependencies]
+slab = "0.4.9"
