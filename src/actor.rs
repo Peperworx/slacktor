@@ -72,6 +72,7 @@ impl<A: Actor> ActorHandle<A> {
 }
 
 impl<A: Actor> ActorRef for ActorHandle<A> {
+    #[inline(always)]
     fn as_any(&self) -> &dyn Any {
         self
     }
@@ -84,6 +85,7 @@ impl<A: Actor> ActorRef for ActorHandle<A> {
 
 // `A` may not impl Clone, but Arc does.
 impl<A: Actor> Clone for ActorHandle<A> {
+    #[inline(always)]
     fn clone(&self) -> Self {
         Self(self.0.clone())
     }
@@ -91,7 +93,7 @@ impl<A: Actor> Clone for ActorHandle<A> {
 
 /// # [`ActorRef`]
 /// Internal trait used for representing actors when stored in the slab.
-pub(crate) trait ActorRef {
+pub(crate) trait ActorRef: Send + Sync + 'static {
     fn as_any(&self) -> &dyn Any;
 
     #[cfg(not(feature = "async"))]
