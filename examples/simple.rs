@@ -30,7 +30,7 @@ fn main() {
     let mut system = Slacktor::new();
 
     // Create a new actor
-    let actor_id = system.spawn(TestActor(10));
+    let actor_id = system.spawn(TestActor(rand::random::<u64>()));
 
     // Get a reference to the actor
     let a = system.get::<TestActor>(actor_id).unwrap();
