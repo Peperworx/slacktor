@@ -2,11 +2,16 @@ use std::{any::Any, sync::Arc};
 
 
 /// # [`Actor`]`
-/// This trait is automatically implemented for every item that is
-/// `Send + Sync + 'static`, which are the only requirements for an actor.
-pub trait Actor: Send + Sync + 'static {}
+/// Trait implemented by actors
+pub trait Actor: Send + Sync + 'static {
+    #[cfg(feature = "async")]
+    fn destroy(&self) -> impl core::future::Future<Output = ()> + Send {
+        async {}
+    }
 
-impl<T: Send + Sync + 'static> Actor for T {}
+    #[cfg(not(feature = "async"))]
+    fn destroy(&self) {}
+}
 
 /// # [`Handler`]`
 /// Implement this trait for all actors that wish to recieve the message T.
@@ -53,11 +58,27 @@ impl<A: Actor> ActorHandle<A> {
     where A: Handler<M> {
         self.0.handle_message(message)
     }
+    
+
+    #[cfg(feature = "async")]
+    pub async fn kill(&self) {
+        self.0.destroy().await;
+    }
+
+    #[cfg(not(feature = "async"))]
+    pub fn kill(&self) {
+        self.0.destroy();
+    }
 }
 
 impl<A: Actor> ActorRef for ActorHandle<A> {
     fn as_any(&self) -> &dyn Any {
         self
+    }
+
+    #[cfg(not(feature = "async"))]
+    fn kill(&self) {
+        self.0.destroy();
     }
 }
 
@@ -72,4 +93,7 @@ impl<A: Actor> Clone for ActorHandle<A> {
 /// Internal trait used for representing actors when stored in the slab.
 pub(crate) trait ActorRef {
     fn as_any(&self) -> &dyn Any;
+
+    #[cfg(not(feature = "async"))]
+    fn kill(&self);
 }
