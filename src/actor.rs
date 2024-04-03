@@ -11,6 +11,10 @@ impl<T: Send + Sync + 'static> Actor for T {}
 /// # [`Handler`]`
 /// Implement this trait for all actors that wish to recieve the message T.
 pub trait Handler<T: Message>: Actor {
+    #[cfg(feature = "async")]
+    fn handle_message(&self, message: T) -> impl core::future::Future<Output = T::Result> + Send;
+
+    #[cfg(not(feature = "async"))]
     fn handle_message(&self, message: T) -> T::Result;
 }
 
@@ -36,6 +40,15 @@ impl<A: Actor> ActorHandle<A> {
 
     /// # [`ActorHandle::send`]
     /// Send a message to the actor and wait for a response
+    #[cfg(feature = "async")]
+    pub async fn send<M: Message>(&self, message: M) -> M::Result
+    where A: Handler<M> {
+        self.0.handle_message(message).await
+    }
+
+    /// # [`ActorHandle::send`]
+    /// Send a message to the actor and wait for a response
+    #[cfg(not(feature = "async"))]
     pub fn send<M: Message>(&self, message: M) -> M::Result
     where A: Handler<M> {
         self.0.handle_message(message)

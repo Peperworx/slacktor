@@ -8,8 +8,12 @@ edition = "2021"
 
 
 [dependencies]
+futures = { version = "0.3.30", features = ["executor"] }
 rand = "0.8.5"
 slab = "0.4.9"
+
+[features]
+async = []
 
 [profile.release]
 lto = true
