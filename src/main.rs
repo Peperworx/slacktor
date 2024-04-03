@@ -1,7 +1,7 @@
 use std::time::Instant;
 
 use slacktor::{
-    actor::{Handler, Message},
+    actor::{Actor, Handler, Message},
     Slacktor,
 };
 
@@ -12,6 +12,12 @@ impl Message for TestMessage {
 }
 
 struct TestActor(pub u64);
+
+impl Actor for TestActor {
+    fn destroy(&self) {
+        println!("destroying");
+    }
+}
 
 impl Handler<TestMessage> for TestActor {
     fn handle_message(&self, m: TestMessage) -> u64 {
@@ -54,4 +60,6 @@ fn main() {
     }
     let elapsed = start.elapsed();
     println!("{:.2} m/s", num_messages as f64 / elapsed.as_secs_f64());
+
+    system.kill(actor_id);
 }
