@@ -33,7 +33,7 @@ fn main() {
     let actor_id = system.spawn(TestActor(rand::random::<u64>()));
 
     // Get a reference to the actor
-    let a = ();
+    let a = system.get::<TestActor>(actor_id).unwrap();
 
     // Time 1 billion messages, appending each to a vector and doing some math to prevent the
     // code being completely optimzied away.
@@ -42,7 +42,7 @@ fn main() {
     let start = Instant::now();
     for i in 0..num_messages {
         // Send the message
-        let v = system.get::<TestActor>(actor_id).unwrap().send(TestMessage(i as u64));
+        let v = a.send(TestMessage(i as u64));
         out.push(v);
     }
     let elapsed = start.elapsed();

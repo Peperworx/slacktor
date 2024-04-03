@@ -2,6 +2,12 @@
 
 Extremely fast bare-bones actor library written in Rust.
 
+## About
+
+Slacktor is an extremely performant actor library. It supports no-std, has only one dependency, and is extremely simple and portable. In optimal conditions, it runs around 700 million messages/second to a single actor with no other dependencies, as seen in the `simple` example (which does use the `rand` crate just to force the compiler to not optimize the code away). Because Slacktor does not handle synchronization, utilizing rayon it is possible to acheive roughly 4.5 billion messages/second on an i9-13900H laptop CPU, as seen in the `parallel` example.
+
+Slacktor has such a low overhead, that simply changing the u64s in `parallel` to u32's in `parallel_u32` provides a speedup to roughly 9 billion messages/second, and reducing them to a u8 in `parallel_u8` increases the speed to 22 billion messages/second. Slacktor has such a low overhead that the code in `parallel_u8` executes at roughly the same speed as the code in `no_slacktor`.
+
 ## Limitations
 
 Slacktor actors do not have what would be called "contexts" in other actor frameworks, a window to the outside world that allows them to interact with existing actors. It is up to the user to provide this, be it as a `RwLock`/`Mutex` of an `Arc` referencing the Slacktor instance, or through message passing. Slacktor is focused on providing a simple and performant core for actor based systems, with minimal dependencies.
@@ -197,3 +203,36 @@ All of these tests were run with `cargo --release`, Cargo version `1.75.0` and r
 
 
 It is safe to say that Slacktor introduces almost no overhead to any projects that use it.
+
+Additionally, Slacktor is entirely parallelizable, so the following code utilizing Rayon is capable of acheiving roughly 4.5 billion messages per second:
+```rust
+// Create a slacktor instance
+let mut system = Slacktor::new();
+
+// Create a new actor
+let actor_id = system.spawn(TestActor(rand::random::<u64>()));
+
+// Get a reference to the actor
+let a = system.get::<TestActor>(actor_id).unwrap();
+
+// Time 1 billion messages, appending each to a vector and doing some math to prevent the
+// code being completely optimzied away.
+let num_messages = 1_000_000_000;
+let start = Instant::now();
+
+let _v = (0..num_messages).into_par_iter().map(|i| {
+    // Send the message
+    a.send(TestMessage(i as u64))
+}).collect::<Vec<_>>();
+
+let elapsed = start.elapsed();
+
+println!(
+    "{:.2} messages/sec",
+    num_messages as f64 / elapsed.as_secs_f64()
+);
+
+system.kill(actor_id);
+```
+
+Retrieving the actor reference inside of the loop leads to a lower speed of roughly 3 billion messages/second.
