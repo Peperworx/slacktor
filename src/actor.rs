@@ -23,12 +23,25 @@ pub trait Handler<T: Message>: Actor {
     fn handle_message(&self, message: T) -> T::Result;
 }
 
-/// # [`Message`]`
+/// # [`Message`]
 /// A message sent to an actor
 pub trait Message: Send + Sync + 'static {
     /// # [`Message::Result`]
     /// The value that the a message handler returns to the caller
     type Result: Send + Sync + 'static;
+}
+
+/// # [`MessageSender`]
+/// Implemented by [`ActorHandle`]s. Allows the actual type of the actor to be
+/// abstracted away, leaving only the type of message that can be sent.
+pub trait MessageSender<M: Message> {
+    /// Send a message to the actor and wait for a response
+    #[cfg(feature = "async")]
+    async fn send(&self, message: M) -> M::Result;
+
+    /// Send a message to the actor and wait for a response
+    #[cfg(not(feature = "async"))]
+    fn send(&self, message: M) -> M::Result;
 }
 
 /// # [`ActorHandle`]
@@ -68,6 +81,20 @@ impl<A: Actor> ActorHandle<A> {
     #[cfg(not(feature = "async"))]
     pub fn kill(&self) {
         self.0.destroy();
+    }
+}
+
+impl<M: Message, A: Actor + Handler<M>> MessageSender<M> for ActorHandle<A> {
+    /// Send a message to the actor and wait for a response
+    #[cfg(feature = "async")]
+    async fn send(&self, message: M) -> M::Result {
+        self.0.handle_message(message).await
+    }
+
+    /// Send a message to the actor and wait for a response
+    #[cfg(not(feature = "async"))]
+    fn send(&self, message: M) -> M::Result {
+        self.0.handle_message(message)
     }
 }
 

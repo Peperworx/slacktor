@@ -3,11 +3,15 @@
 extern crate alloc;
 
 use alloc::sync::Arc;
-use actor::{Actor, ActorHandle, ActorRef};
-
 
 
 pub mod actor;
+
+pub use actor::{
+    Actor, ActorHandle, Message, MessageSender
+};
+
+use actor::ActorRef;
 
 pub struct Slacktor {
     /// The underying slab that stores actors.

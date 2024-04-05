@@ -1,20 +1,31 @@
-# Slacktor
+<div align="center">
+<h1> Slacktor </h1>
 
-Extremely fast bare-bones actor library written in Rust.
+[![crates.io](https://img.shields.io/crates/l/slacktor?style=for-the-badge)](https://crates.io/crates/slacktor)
+[![crates.io](https://img.shields.io/crates/v/slacktor?style=for-the-badge)](https://crates.io/crates/slacktor)
+[![docs.rs](https://img.shields.io/docsrs/slacktor?style=for-the-badge)](https://docs.rs/slacktor)
+
+<p>Extremely fast bare-bones actor library written in Rust.</p>
+</div>
+
+
 
 ## About
 
 Slacktor is an extremely performant actor library. It supports no-std, has only one dependency, and is extremely simple and portable. In optimal conditions, it runs around 700 million messages/second to a single actor with no other dependencies, as seen in the `simple` example (which does use the `rand` crate just to force the compiler to not optimize the code away). Because Slacktor does not handle synchronization, utilizing rayon it is possible to acheive roughly 4.5 billion messages/second on an i9-13900H laptop CPU, as seen in the `parallel` example.
 
-Slacktor has such a low overhead, that simply changing the u64s in `parallel` to u32's in `parallel_u32` provides a speedup to roughly 9 billion messages/second, and reducing them to a u8 in `parallel_u8` increases the speed to 22 billion messages/second. Slacktor has such a low overhead that the code in `parallel_u8` executes at roughly the same speed as the code in `no_slacktor`.
+Slacktor has such a low overhead, that simply changing the u64s in `parallel` to u32's in `parallel_u32` provides a speedup to roughly 9 billion messages/second, and reducing them to a u8 in `parallel_u8` increases the speed to 21 billion messages/second. The example `no_slacktor` is the equivalent of `parallel_u8` without Slacktor, and is capable of 22 billion messages/second. Reducing allocations using an iterator method like `sum` instead of `collect`, I have measured up to 80 billion messages/second.
 
-## Limitations
+## Limitations and Disclaimers
 
-Slacktor actors do not have what would be called "contexts" in other actor frameworks, a window to the outside world that allows them to interact with existing actors. It is up to the user to provide this, be it as a `RwLock`/`Mutex` of an `Arc` referencing the Slacktor instance, or through message passing. Slacktor is focused on providing a simple and performant core for actor based systems, with minimal dependencies.
+Slacktor actors do not have what would be called "contexts" in other actor frameworks, a window to the outside world that allows them to interact with existing actors. It is up to the user to provide this, be it as a `RwLock`/`Mutex` of an `Arc` referencing the Slacktor instance, or through message passing. Slacktor is focused on providing a simple and performant core for actor based systems, with minmal dependencies.
+
+Slacktor doesn't actually use message passing. Instead, it emulates message passing on top of raw function calls. This allows for extremely high performance, maintains the advantages of other actor frameworks, and provides users with complete control over their project structure. You can use Slacktor as much or as little as you want.
 
 ## How is Slacktor So Fast?
 
-Slacktor doesn't try to handle any synchronization, concurrency, or message passing. Instead, Slacktor provides a simple abstraction over a slab of actors. Message passing is then emulated by calling the message handler as soon as `send` is called. This allows the compiler to essentially optimize away the entirery of Slacktor down to just a few function calls.
+Slacktor doesn't try to handle any synchronization, concurrency, or message passing. Instead, Slacktor provides a simple abstraction over a slab of actors. Message passing is then emulated by calling the message handler as soon as `send` is called. This allows the compiler to essentially optimize away the entirery of Slacktor down to just a few function calls, while still maintaining the abstraction of message passing. 
+
 
 ## Benchmarks
 
@@ -142,7 +153,7 @@ Retrieving the actor reference inside of the loop in this case gives us roughly 
 
 The following equivalent code for the Actix framework can handle roughly 400,000 messages/second, and
 does not allow the Rust compiler to optimize away second loop. I have reduced the number of messages to 1 million,
-as 1 billion is too much for Actix to handle in this case.
+as 1 billion is too much for Actix to handle in a reasonable timeframe.
 
 ```rust
 use std::time::Instant;
@@ -235,4 +246,4 @@ println!(
 system.kill(actor_id);
 ```
 
-Retrieving the actor reference inside of the loop leads to a lower speed of roughly 3 billion messages/second.
+Retrieving the actor reference inside of the loop leads to a lower speed of roughly 3 billion messages/second. The `parallel_u8` example is capable of acheiving roughly 21 billion messages per second.
