@@ -81,4 +81,31 @@ impl Slacktor {
         self.slab.get(id)
             .and_then(|actor| actor.as_any().downcast_ref())
     }
+
+    /// # [`Slacktor::shutdown`]
+    /// Kills every actor on the system and deallocates the slab.
+    /// The system is returned to the same state as when it was first initialized.
+    #[cfg(feature = "async")]
+    pub async fn shutdown(&mut self) {
+        for a in self.slab.drain() {
+            a.kill().await;
+        }
+        self.slab.shrink_to_fit();
+    }
+
+    /// # [`Slacktor::shutdown`]
+    /// Kills every actor on the system and deallocates the slab.
+    /// The system is returned to the same state as when it was first initialized.
+    pub fn shutdown(&mut self) {
+        for a in self.slab.drain() {
+            a.kill();
+        }
+        self.slab.shrink_to_fit();
+    }
+
+    /// # [`Slacktor::shrink`]
+    /// Unallocates as much unused memory from the end of the slab as possible.
+    pub fn shrink(&mut self) {
+        self.slab.shrink_to_fit();
+    }
 }
