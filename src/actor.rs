@@ -37,7 +37,7 @@ pub trait Message: Send + Sync + 'static {
 pub trait MessageSender<M: Message> {
     /// Send a message to the actor and wait for a response
     #[cfg(feature = "async")]
-    async fn send(&self, message: M) -> M::Result;
+    fn send(&self, message: M) -> impl core::future::Future<Output = M::Result> + Send;
 
     /// Send a message to the actor and wait for a response
     #[cfg(not(feature = "async"))]
@@ -108,6 +108,13 @@ impl<A: Actor> ActorRef for ActorHandle<A> {
     fn kill(&self) {
         self.0.destroy();
     }
+
+    #[cfg(feature = "async")]
+    fn kill(&self) -> core::pin::Pin<alloc::boxed::Box<dyn core::future::Future<Output = ()> + Send + '_>> {
+        alloc::boxed::Box::pin(async {
+            self.0.destroy().await
+        })
+    }
 }
 
 // `A` may not impl Clone, but Arc does.
@@ -125,4 +132,7 @@ pub(crate) trait ActorRef: Send + Sync + 'static {
 
     #[cfg(not(feature = "async"))]
     fn kill(&self);
+
+    #[cfg(feature = "async")]
+    fn kill(&self) -> core::pin::Pin<alloc::boxed::Box<dyn core::future::Future<Output = ()> + Send + '_>>;
 }
