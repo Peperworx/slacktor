@@ -96,6 +96,7 @@ impl Slacktor {
     /// # [`Slacktor::shutdown`]
     /// Kills every actor on the system and deallocates the slab.
     /// The system is returned to the same state as when it was first initialized.
+    #[cfg(not(feature = "async"))]
     pub fn shutdown(&mut self) {
         for a in self.slab.drain() {
             a.kill();
