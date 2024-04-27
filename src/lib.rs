@@ -27,6 +27,12 @@ impl Slacktor {
         }
     }
 
+    /// # [`Slacktor::next_id`]
+    /// Returns what the id of the next actor will be
+    pub fn next_id(&self) -> u64 {
+        self.slab.vacant_key() as u64
+    }
+
     /// # [`Slacktor::spawn`]
     /// Create a new actor and return it's id.
     pub fn spawn<A: Actor>(&mut self, actor: A) -> usize {
