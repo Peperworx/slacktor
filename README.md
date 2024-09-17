@@ -213,7 +213,7 @@ async fn main() {
 All of these tests were run with `cargo --release`, Cargo version `1.75.0` and rustc version `1.75.0` with lto enabled (to minimal effect).
 
 
-It is safe to say that Slacktor introduces almost no overhead to any projects that use it.
+It is safe to say that Slacktor introduces very little overhead to any projects that use it.
 
 Additionally, Slacktor is entirely parallelizable, so the following code utilizing Rayon is capable of acheiving roughly 4.5 billion messages per second:
 ```rust
