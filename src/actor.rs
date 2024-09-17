@@ -37,7 +37,7 @@ pub trait Message: Send + Sync + 'static {
 pub trait MessageSender<M: Message> {
     /// Send a message to the actor and wait for a response
     #[cfg(feature = "async")]
-    fn send(&self, message: M) -> impl core::future::Future<Output = M::Result> + Send;
+    fn send(&self, message: M) -> impl core::future::Future<Output = M::Result> + Send + '_;
 
     /// Send a message to the actor and wait for a response
     #[cfg(not(feature = "async"))]
@@ -59,9 +59,9 @@ impl<A: Actor> ActorHandle<A> {
     /// # [`ActorHandle::send`]
     /// Send a message to the actor and wait for a response
     #[cfg(feature = "async")]
-    pub async fn send<M: Message>(&self, message: M) -> M::Result
+    pub fn send<M: Message>(&self, message: M) -> impl core::future::Future<Output = M::Result> + Send + '_
     where A: Handler<M> {
-        self.0.handle_message(message).await
+        self.0.handle_message(message)
     }
 
     /// # [`ActorHandle::send`]
@@ -74,8 +74,8 @@ impl<A: Actor> ActorHandle<A> {
     
 
     #[cfg(feature = "async")]
-    pub async fn kill(&self) {
-        self.0.destroy().await;
+    pub fn kill(&self) -> impl core::future::Future<Output = ()> + Send + '_ {
+        self.0.destroy()
     }
 
     #[cfg(not(feature = "async"))]
@@ -87,8 +87,8 @@ impl<A: Actor> ActorHandle<A> {
 impl<M: Message, A: Actor + Handler<M>> MessageSender<M> for ActorHandle<A> {
     /// Send a message to the actor and wait for a response
     #[cfg(feature = "async")]
-    async fn send(&self, message: M) -> M::Result {
-        self.0.handle_message(message).await
+    fn send(&self, message: M) -> impl core::future::Future<Output = M::Result> + Send + '_ {
+        self.0.handle_message(message)
     }
 
     /// Send a message to the actor and wait for a response

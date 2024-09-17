@@ -13,10 +13,12 @@ pub use actor::{
 
 use actor::ActorRef;
 
+#[derive(Default)]
 pub struct Slacktor {
     /// The underying slab that stores actors.
     slab: slab::Slab<Arc<dyn ActorRef>>,
 }
+
 
 impl Slacktor {
     /// # [`Slacktor::new`]
